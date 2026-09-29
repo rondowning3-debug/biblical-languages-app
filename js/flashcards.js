@@ -77,6 +77,26 @@ async function fetchDeck(lang) {
   }
 }
 
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Randomizes review order within each due date, while still surfacing
+// genuinely overdue cards (earlier dueDate) before cards only due today.
+function shuffleWithinDueDate(cards) {
+  const groups = new Map();
+  for (const c of cards) {
+    if (!groups.has(c.dueDate)) groups.set(c.dueDate, []);
+    groups.get(c.dueDate).push(c);
+  }
+  return [...groups.keys()].sort().flatMap((date) => shuffle(groups.get(date)));
+}
+
 function renderStatus(message) {
   document.getElementById("flashcard-status").textContent = message;
 }
@@ -123,7 +143,7 @@ async function loadLang(lang) {
   } else if (!result.ok) {
     renderStatus("Could not fetch the vocab sheet — check the CSV URL and your connection.");
   }
-  queue = getDueCards(lang);
+  queue = shuffleWithinDueDate(getDueCards(lang));
   nextCard();
 }
 
