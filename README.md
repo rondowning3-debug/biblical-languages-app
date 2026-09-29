@@ -38,3 +38,7 @@ Repeat per tab (each has its own URL/gid).
 - **Hebrew:** Ruth → Genesis (opening chapters) → *(TBD)*
 
 5 verses/sitting in Greek, 3 in Hebrew. Progress and SRS review state are stored in the browser's localStorage (per-browser, not synced).
+
+## Fonts
+
+Greek and Hebrew text anywhere in the app automatically renders in the SBL Greek / SBL Hebrew fonts (`css/fonts/`), via `unicode-range`-scoped `@font-face` rules in `css/style.css` — no per-element markup needed. These fonts are from the Society of Biblical Literature (sbl-site.org/resources/fonts/), designed by John Hudson/Tiro Typeworks, and are free for personal/non-commercial scholarly use per the SBL Font User Agreement (commercial use requires a separate license).

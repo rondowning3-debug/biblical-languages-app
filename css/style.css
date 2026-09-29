@@ -1,3 +1,23 @@
+/* SBL Greek/Hebrew biblical fonts (Society of Biblical Literature,
+   free for personal/non-commercial use: sbl-site.org/resources/fonts/).
+   unicode-range scopes each font to its script's codepoints, so the
+   browser auto-selects the right font per character -- Greek and Hebrew
+   text anywhere in the app renders in the SBL fonts with no extra
+   markup, while English text keeps falling back to the base serif. */
+@font-face {
+  font-family: "SBL Greek";
+  src: url("fonts/SBL_grk.ttf") format("truetype");
+  /* Greek and Coptic + Greek Extended (polytonic/NT diacritics) */
+  unicode-range: U+0370-03FF, U+1F00-1FFF;
+}
+
+@font-face {
+  font-family: "SBL Hebrew";
+  src: url("fonts/SBL_Hbrw.ttf") format("truetype");
+  /* Hebrew block, incl. cantillation marks/points */
+  unicode-range: U+0590-05FF;
+}
+
 :root {
   --bg: #f7f5f0;
   --ink: #23231f;
@@ -11,7 +31,7 @@
 
 body {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "SBL Greek", "SBL Hebrew", Georgia, "Times New Roman", serif;
   background: var(--bg);
   color: var(--ink);
 }
