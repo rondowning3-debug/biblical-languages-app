@@ -123,6 +123,18 @@ main {
   line-height: 1.6;
 }
 
+#grammar-content .source {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: -0.5rem;
+}
+
+#grammar-content blockquote {
+  margin: 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--border);
+}
+
 #reading-passage {
   background: var(--card-bg);
   border: 1px solid var(--border);
