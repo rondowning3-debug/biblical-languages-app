@@ -3,10 +3,10 @@
 // (File -> Share -> Publish to web -> select tab -> CSV).
 export const VOCAB_SOURCES = {
   greek: {
-    csvUrl: "", // e.g. https://docs.google.com/spreadsheets/d/e/XXX/pub?gid=0&single=true&output=csv
+    csvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRoUH7TdZ7W71PsT0OxGb3jajBm-9hV8PWF_gaWtd5A6_rhgcaqJhMGVSAQpKDpskmn_6meV1XM6ysX/pub?gid=0&single=true&output=csv",
   },
   hebrew: {
-    csvUrl: "",
+    csvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRoUH7TdZ7W71PsT0OxGb3jajBm-9hV8PWF_gaWtd5A6_rhgcaqJhMGVSAQpKDpskmn_6meV1XM6ysX/pub?gid=841375702&single=true&output=csv",
   },
 };
 

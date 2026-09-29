@@ -5,22 +5,61 @@ let currentLang = "greek";
 let queue = [];
 let currentCard = null;
 
+// Tokenizes RFC4180-style CSV: handles quoted fields containing commas,
+// escaped quotes (""), and quoted fields containing newlines.
+function tokenizeCsv(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (inQuotes) {
+      if (char === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += char;
+      }
+    } else if (char === '"') {
+      inQuotes = true;
+    } else if (char === ",") {
+      row.push(field);
+      field = "";
+    } else if (char === "\n" || char === "\r") {
+      if (char === "\r" && text[i + 1] === "\n") i++;
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+    } else {
+      field += char;
+    }
+  }
+  if (field.length > 0 || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+  return rows;
+}
+
 function parseCsv(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length === 0) return [];
-  const header = lines[0].split(",").map((h) => h.trim().toLowerCase());
+  const rows = tokenizeCsv(text.trim());
+  if (rows.length === 0) return [];
+  const header = rows[0].map((h) => h.trim().toLowerCase());
   const wordIdx = header.indexOf("word");
   const transIdx = header.indexOf("translation");
   if (wordIdx === -1 || transIdx === -1) return [];
 
-  return lines.slice(1).map((line) => {
-    // naive CSV split; fine for simple Word,Translation exports without embedded commas
-    const cols = line.split(",");
-    return {
-      word: (cols[wordIdx] || "").trim(),
-      translation: (cols[transIdx] || "").trim(),
-    };
-  }).filter((r) => r.word);
+  return rows.slice(1).map((cols) => ({
+    word: (cols[wordIdx] || "").trim(),
+    translation: (cols[transIdx] || "").trim(),
+  })).filter((r) => r.word);
 }
 
 async function fetchDeck(lang) {
