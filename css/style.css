@@ -59,6 +59,8 @@ main {
 .view { display: none; }
 .view.active { display: block; }
 
+.hidden { display: none; }
+
 .status-line {
   color: var(--muted);
   margin-bottom: 1rem;
@@ -71,6 +73,8 @@ main {
   border-radius: 8px;
   min-height: 160px;
   display: flex;
+  flex-direction: column;
+  gap: 1rem;
   align-items: center;
   justify-content: center;
   padding: 2rem;
