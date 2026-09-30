@@ -1,3 +1,10 @@
 [
-  { "title": "Government & Concord (§§30–31)", "file": "government-and-concord.html" }
+  {
+    "title": "Government & Concord (§§30–31)",
+    "file": "government-and-concord.html"
+  },
+  {
+    "title": "Adjective Syntax",
+    "file": "adjective-syntax.html"
+  }
 ]

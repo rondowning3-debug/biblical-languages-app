@@ -35,6 +35,51 @@ def table(lines):
     return out + ["</tbody>", "</table>"]
 
 
+ITEM = re.compile(r"^(\s*)([-*]|\d+\.|[a-z]\.)\s+(.*)$")
+
+
+def is_item(l):
+    m = ITEM.match(l)
+    # letter markers (a.) only count when indented, so prose like "e.g." is never a list
+    return bool(m) and (not re.fullmatch(r"[a-z]\.", m[2]) or bool(m[1]))
+
+
+def indent(s):
+    return len(s.expandtabs(4)) - len(s.expandtabs(4).lstrip())
+
+
+def render_list(lines):
+    """Nested list from markers (-, 1., a.) and indentation. Unmarked lines indented
+    under an item become line breaks inside that item."""
+    items = []  # (indent, marker, [text lines])
+    for l in lines:
+        m = ITEM.match(l) if is_item(l) else None
+        if m:
+            items.append([indent(l), m[2], [m[3]]])
+        elif items:
+            items[-1][2].append(l.strip())
+
+    def build(pos, level):
+        m = items[pos][1]
+        tag, attr = ("ul", "") if m in "-*" else (("ol", ' type="a"') if m[0].isalpha() else ("ol", ""))
+        html_out = [f"<{tag}{attr}>"]
+        while pos < len(items) and items[pos][0] == level:
+            html_out.append("<li>" + "<br>".join(inline(t) for t in items[pos][2]))
+            pos += 1
+            if pos < len(items) and items[pos][0] > level:
+                sub, pos = build(pos, items[pos][0])
+                html_out.append(sub)
+            html_out.append("</li>")
+        html_out.append(f"</{tag}>")
+        return "".join(html_out), pos
+
+    result, pos = "", 0
+    while pos < len(items):
+        chunk, pos = build(pos, items[pos][0])
+        result += chunk
+    return result
+
+
 def body_to_html(lines):
     out, i = [], 0
     while i < len(lines):
@@ -57,14 +102,14 @@ def body_to_html(lines):
                 elif cur: paras.append(" ".join(cur)); cur = []
             if cur: paras.append(" ".join(cur))
             out.append("<blockquote>" + "".join(f"<p>{inline(p)}</p>" for p in paras) + "</blockquote>"); i = j
-        elif re.match(r"^\s*[-*]\s+", l):
-            j = i; items = []
-            while j < len(lines) and re.match(r"^\s*[-*]\s+", lines[j]):
-                items.append(re.sub(r"^\s*[-*]\s+", "", lines[j])); j += 1
-            out.append("<ul>" + "".join(f"<li>{inline(x)}</li>" for x in items) + "</ul>"); i = j
+        elif is_item(l):
+            j = i
+            while j < len(lines) and lines[j].strip() and (is_item(lines[j]) or lines[j][:1] in " \t"):
+                j += 1
+            out.append(render_list(lines[i:j])); i = j
         else:
             j = i; para = []
-            while j < len(lines) and lines[j].strip() and not lines[j].startswith((">", "###")) and not lines[j].lstrip().startswith("|") and not re.match(r"^\s*[-*]\s+", lines[j]):
+            while j < len(lines) and lines[j].strip() and not lines[j].startswith((">", "###")) and not lines[j].lstrip().startswith("|") and not is_item(lines[j]):
                 para.append(lines[j].strip()); j += 1
             out.append(f"<p>{inline(' '.join(para))}</p>"); i = j
     return out
@@ -80,6 +125,8 @@ def parse(path):
             cur = {"kind": m[1].lower(), "lang": m[2].lower(), "title": m[3], "lines": []}
             entries.append(cur)
         elif cur is not None:
+            if not fence and re.fullmatch(r"-{3,}", line.strip()):
+                continue  # horizontal rule between inbox entries, not content
             cur["lines"].append(line)
         else:
             header.append(line)
