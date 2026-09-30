@@ -45,3 +45,12 @@ export const PACING_CONFIG = {
   masteryInterval: 7,     // a card counts as "mastered" once its review interval is this many days or more
   unlockThreshold: 0.8,   // fraction of the previous batch that must be mastered to open the next
 };
+
+// Words above a frequency cutoff are presumed already known: unless the
+// sheet's "Star" column is filled for that word, its card is created as
+// mastered, with its first review scattered randomly over the next
+// `interval` days so they surface rarely. Starred words go through normal
+// pacing. Languages not listed here have no presumed-known words.
+export const PRESUMED_KNOWN = {
+  greek: { minFrequency: 75, interval: 30 },
+};

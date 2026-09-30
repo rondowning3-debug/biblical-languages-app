@@ -1,7 +1,7 @@
 // Minimal SM-2 style spaced-repetition engine.
 // Card shape: { id, word, translation, lang, ease, interval, reps, dueDate }
 
-import { PACING_CONFIG } from "../data/config.js";
+import { PACING_CONFIG, PRESUMED_KNOWN } from "../data/config.js";
 
 const STORAGE_KEY = "blapp_srs_v1";
 const PACING_KEY = "blapp_pacing_v1";
@@ -44,6 +44,34 @@ function newCard(id, word, translation, lang, freq, order) {
   };
 }
 
+function todayPlus(days) {
+  return new Date(Date.now() + days * DAY_MS).toISOString().slice(0, 10);
+}
+
+// Applies the presumed-known rule (see PRESUMED_KNOWN in config). Unstarred
+// high-frequency words that haven't been studied are seeded as mastered with
+// a scattered due date; a starred word that was previously seeded this way is
+// reset so it goes through normal pacing. Real review history is never touched.
+function applyPresumption(card, row, lang) {
+  const rule = PRESUMED_KNOWN[lang];
+  if (!rule || card.freq == null) return;
+  const qualifies = card.freq >= rule.minFrequency;
+  if (qualifies && !row.starred && card.introduced === false && card.reps === 0) {
+    card.introduced = true;
+    card.presumed = true;
+    card.reps = 3;
+    card.interval = rule.interval;
+    card.dueDate = todayPlus(Math.floor(Math.random() * rule.interval));
+  } else if (row.starred && card.presumed) {
+    card.presumed = false;
+    card.introduced = false;
+    card.reps = 0;
+    card.interval = 0;
+    card.ease = 2.5;
+    card.dueDate = todayStamp();
+  }
+}
+
 // Merge freshly-fetched vocab rows into stored SRS state.
 // Existing progress is preserved; new words get fresh cards.
 export function syncDeck(lang, rows) {
@@ -60,6 +88,7 @@ export function syncDeck(lang, rows) {
       // cards from before pacing existed: anything already reviewed counts as introduced
       if (state[id].introduced === undefined) state[id].introduced = state[id].reps > 0;
     }
+    applyPresumption(state[id], row, lang);
   });
   saveState(state);
   return state;
@@ -191,7 +220,7 @@ export function introduceNewCards(lang) {
       pacing[lang].count++;
       remaining--;
     }
-    break; // one batch at a time; the next opens on a later load once this one is mastered
+    // keep going: the next batch only opens if this one (now including the words just introduced) still meets the mastery gate
   }
   saveState(state);
   savePacing(pacing);

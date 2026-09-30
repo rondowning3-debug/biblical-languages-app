@@ -61,12 +61,14 @@ function parseCsv(text) {
   const wordIdx = header.indexOf("word");
   const transIdx = header.indexOf("translation");
   const freqIdx = header.indexOf("frequency");
+  const starIdx = header.indexOf("star");
   if (wordIdx === -1 || transIdx === -1) return [];
 
   return rows.slice(1).map((cols) => ({
     word: (cols[wordIdx] || "").trim(),
     translation: (cols[transIdx] || "").trim(),
     freq: freqIdx === -1 ? null : parseFreq(cols[freqIdx]),
+    starred: starIdx !== -1 && (cols[starIdx] || "").trim() !== "",
   })).filter((r) => r.word);
 }
 
