@@ -3,6 +3,9 @@
 app's content files: content/<grammar|paradigms>/<greek|hebrew>/<slug>.html
 plus an index.json entry. Text is converted verbatim -- nothing is generated.
 
+Shorthand (e.g. `Goet.`, `ss.`) is read from `Language Content Shorthand.md`
+next to the inbox and expanded in titles, Source lines, and bodies.
+
 Usage: import_inbox.py <inbox.md> [--dry-run]
 On success (and not --dry-run) the inbox is reset to its header only.
 Entries whose title already exists in the index are skipped and reported,
@@ -83,6 +86,25 @@ def parse(path):
     return header, entries
 
 
+def load_shorthand(path):
+    """Bullet lines of the form `- abbr = expansion`; longest abbreviation wins."""
+    pairs = []
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            m = re.match(r"^-\s+(\S+)\s*=\s*(.+?)\s*$", line)
+            if m: pairs.append((m[1], m[2]))
+    return sorted(pairs, key=lambda p: -len(p[0]))
+
+
+def expand(text, pairs):
+    """Replace an abbreviation only when it starts a token (not mid-word).
+    Expansions ending in a symbol (e.g. section signs) absorb following spaces."""
+    for abbr, full in pairs:
+        tail = r"[ \t]*" if full.endswith("\u00a7") else ""
+        text = re.sub(r"(?<!\w)" + re.escape(abbr) + tail, lambda m: full, text)
+    return text
+
+
 def slug(title):
     s = unicodedata.normalize("NFKD", title).encode("ascii", "ignore").decode()
     s = re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
@@ -92,6 +114,10 @@ def slug(title):
 def main():
     inbox = Path(sys.argv[1]); dry = "--dry-run" in sys.argv
     header, entries = parse(inbox)
+    pairs = load_shorthand(inbox.parent / "Language Content Shorthand.md")
+    for e in entries:
+        e["title"] = expand(e["title"], pairs)
+        e["lines"] = [expand(l, pairs) for l in e["lines"]]
     if not entries:
         print("No entries found in inbox."); return
     written, skipped = [], []
