@@ -194,6 +194,8 @@ def import_reading(e, dry, written, skipped):
     prefix = f"{book} {chap}:"
     if any(v["ref"].startswith(prefix) for v in data):
         skipped.append(f"readings/{e['lang']}: {e['title']} (chapter already exists)"); return
+    # straight apostrophe after a Greek letter (elision) -> curved U+2019
+    verses = [(n, re.sub(r"(?<=[\u0370-\u03FF\u1F00-\u1FFF])'", "\u2019", t), para) for n, t, para in verses]
     data += [{"ref": f"{prefix}{n}", "text": t, **({"para": True} if para else {})} for n, t, para in verses]
     data.sort(key=lambda v: tuple(int(x) for x in re.search(r"(\d+):(\d+)$", v["ref"]).groups()))
     written.append(f"readings/{e['lang']}: {e['title']} -> {path.name} ({len(verses)} verses)")
