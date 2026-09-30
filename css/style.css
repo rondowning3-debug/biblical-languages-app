@@ -165,3 +165,19 @@ main {
     padding: 1.25rem 1rem 2rem;
   }
 }
+
+/* Tables inside grammar/paradigm entries */
+.topic-viewer-content table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  width: 100%;
+}
+.topic-viewer-content th,
+.topic-viewer-content td {
+  border: 1px solid rgba(128, 128, 128, 0.4);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+.topic-viewer-content th {
+  font-weight: 600;
+}
