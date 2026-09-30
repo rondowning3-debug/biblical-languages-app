@@ -2,5 +2,21 @@
   {
     "title": "Verb Suffixes Table",
     "file": "verb-suffixes-table.html"
+  },
+  {
+    "title": "Present Active Indicative",
+    "file": "present-active-indicative.html"
+  },
+  {
+    "title": "Imperfect Active Indicative",
+    "file": "imperfect-active-indicative.html"
+  },
+  {
+    "title": "Present Middle/Passive Indicative",
+    "file": "present-middle-passive-indicative.html"
+  },
+  {
+    "title": "Imperfect Middle/Passive Indicative",
+    "file": "imperfect-middle-passive-indicative.html"
   }
 ]
