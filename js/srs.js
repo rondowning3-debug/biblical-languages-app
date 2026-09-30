@@ -1,7 +1,10 @@
 // Minimal SM-2 style spaced-repetition engine.
 // Card shape: { id, word, translation, lang, ease, interval, reps, dueDate }
 
+import { PACING_CONFIG } from "../data/config.js";
+
 const STORAGE_KEY = "blapp_srs_v1";
+const PACING_KEY = "blapp_pacing_v1";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function todayStamp() {
@@ -25,8 +28,11 @@ function saveState(state) {
   }
 }
 
-function newCard(id, word, translation, lang) {
+function newCard(id, word, translation, lang, freq, order) {
   return {
+    freq,
+    order,
+    introduced: false,
     id,
     word,
     translation,
@@ -42,15 +48,19 @@ function newCard(id, word, translation, lang) {
 // Existing progress is preserved; new words get fresh cards.
 export function syncDeck(lang, rows) {
   const state = loadState();
-  for (const row of rows) {
+  rows.forEach((row, i) => {
     const id = `${lang}:${row.word}`;
     if (!state[id]) {
-      state[id] = newCard(id, row.word, row.translation, lang);
+      state[id] = newCard(id, row.word, row.translation, lang, row.freq, i);
     } else {
-      // keep progress, but refresh translation in case the sheet changed it
+      // keep progress, but refresh translation/frequency in case the sheet changed
       state[id].translation = row.translation;
+      state[id].freq = row.freq;
+      state[id].order = i;
+      // cards from before pacing existed: anything already reviewed counts as introduced
+      if (state[id].introduced === undefined) state[id].introduced = state[id].reps > 0;
     }
-  }
+  });
   saveState(state);
   return state;
 }
@@ -59,7 +69,7 @@ export function getDueCards(lang) {
   const state = loadState();
   const today = todayStamp();
   return Object.values(state)
-    .filter((c) => c.lang === lang && c.dueDate <= today)
+    .filter((c) => c.lang === lang && c.introduced !== false && c.dueDate <= today)
     .sort((a, b) => (a.dueDate < b.dueDate ? -1 : 1));
 }
 
@@ -97,4 +107,102 @@ export function reviewCard(id, grade) {
   card.dueDate = due.toISOString().slice(0, 10);
   state[id] = card;
   saveState(state);
+}
+
+function loadPacing() {
+  try {
+    const raw = localStorage.getItem(PACING_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function savePacing(p) {
+  try {
+    localStorage.setItem(PACING_KEY, JSON.stringify(p));
+  } catch {
+    // ignore
+  }
+}
+
+// Highest frequency first; words with no frequency go last, in sheet order.
+function sortedCards(state, lang) {
+  return Object.values(state)
+    .filter((c) => c.lang === lang)
+    .sort((a, b) => {
+      const fa = a.freq ?? -Infinity;
+      const fb = b.freq ?? -Infinity;
+      return fb - fa || a.order - b.order;
+    });
+}
+
+// Groups the sorted deck into batches of like frequency: all words sharing a
+// frequency value stay together, and adjacent values merge until a batch
+// reaches minBatchSize.
+function buildBatches(cards) {
+  const batches = [];
+  let current = [];
+  let i = 0;
+  while (i < cards.length) {
+    const f = cards[i].freq;
+    let j = i;
+    while (j < cards.length && cards[j].freq === f) j++;
+    current.push(...cards.slice(i, j));
+    if (current.length >= PACING_CONFIG.minBatchSize) {
+      batches.push(current);
+      current = [];
+    }
+    i = j;
+  }
+  if (current.length) batches.push(current);
+  return batches;
+}
+
+function isMastered(card) {
+  return card.introduced !== false && card.interval >= PACING_CONFIG.masteryInterval;
+}
+
+// Introduces new words (respecting the daily cap and the mastery gate) and
+// returns a summary for the status line.
+export function introduceNewCards(lang) {
+  const state = loadState();
+  const batches = buildBatches(sortedCards(state, lang));
+  const pacing = loadPacing();
+  const today = todayStamp();
+  if (!pacing[lang] || pacing[lang].date !== today) pacing[lang] = { date: today, count: 0 };
+
+  const summary = { batchIndex: 0, batchCount: batches.length, masteredPct: 0, newToday: 0, locked: false };
+  if (batches.length === 0) return summary;
+
+  let remaining = PACING_CONFIG.newPerDay - pacing[lang].count;
+  for (let b = 0; b < batches.length && remaining > 0; b++) {
+    const pending = batches[b].filter((c) => c.introduced === false);
+    if (pending.length === 0) continue;
+    if (b > 0) {
+      const prev = batches[b - 1];
+      const ratio = prev.filter(isMastered).length / prev.length;
+      if (ratio < PACING_CONFIG.unlockThreshold) break;
+    }
+    for (const card of pending.slice(0, remaining)) {
+      card.introduced = true;
+      card.dueDate = today;
+      state[card.id] = card;
+      pacing[lang].count++;
+      remaining--;
+    }
+    break; // one batch at a time; the next opens on a later load once this one is mastered
+  }
+  saveState(state);
+  savePacing(pacing);
+
+  // Status: the earliest batch that isn't fully mastered is the "current" one.
+  const cur = batches.findIndex((batch) => !batch.every(isMastered));
+  summary.batchIndex = cur === -1 ? batches.length - 1 : cur;
+  const curBatch = batches[summary.batchIndex];
+  summary.masteredPct = Math.round((curBatch.filter(isMastered).length / curBatch.length) * 100);
+  summary.newToday = pacing[lang].count;
+  summary.locked = curBatch.some((c) => c.introduced === false) === false &&
+    summary.batchIndex < batches.length - 1;
+  return summary;
 }

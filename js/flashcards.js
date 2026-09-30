@@ -1,9 +1,10 @@
 import { VOCAB_SOURCES } from "../data/config.js";
-import { syncDeck, getDueCards, getDeckSize, reviewCard } from "./srs.js";
+import { syncDeck, getDueCards, getDeckSize, reviewCard, introduceNewCards } from "./srs.js";
 
 let currentLang = "greek";
 let queue = [];
 let currentCard = null;
+let pacingSummary = null;
 
 // Tokenizes RFC4180-style CSV: handles quoted fields containing commas,
 // escaped quotes (""), and quoted fields containing newlines.
@@ -48,17 +49,24 @@ function tokenizeCsv(text) {
   return rows;
 }
 
+function parseFreq(raw) {
+  const n = parseFloat((raw || "").replace(/,/g, ""));
+  return Number.isFinite(n) ? n : null;
+}
+
 function parseCsv(text) {
   const rows = tokenizeCsv(text.trim());
   if (rows.length === 0) return [];
   const header = rows[0].map((h) => h.trim().toLowerCase());
   const wordIdx = header.indexOf("word");
   const transIdx = header.indexOf("translation");
+  const freqIdx = header.indexOf("frequency");
   if (wordIdx === -1 || transIdx === -1) return [];
 
   return rows.slice(1).map((cols) => ({
     word: (cols[wordIdx] || "").trim(),
     translation: (cols[transIdx] || "").trim(),
+    freq: freqIdx === -1 ? null : parseFreq(cols[freqIdx]),
   })).filter((r) => r.word);
 }
 
@@ -120,6 +128,12 @@ function renderCard() {
   back.textContent = currentCard.translation;
 }
 
+function pacingText() {
+  if (!pacingSummary || pacingSummary.batchCount === 0) return "";
+  const { batchIndex, batchCount, masteredPct, newToday } = pacingSummary;
+  return ` · Batch ${batchIndex + 1} of ${batchCount} (${masteredPct}% mastered) · ${newToday} new today`;
+}
+
 function nextCard() {
   currentCard = queue.shift() || null;
   renderCard();
@@ -127,10 +141,10 @@ function nextCard() {
     renderStatus(
       getDeckSize(currentLang) === 0
         ? "No vocab loaded yet — add the Google Sheet CSV URL in data/config.js."
-        : "All caught up for today."
+        : `All caught up for today.${pacingText()}`
     );
   } else {
-    renderStatus(`${queue.length + 1} due`);
+    renderStatus(`${queue.length + 1} due${pacingText()}`);
   }
 }
 
@@ -143,6 +157,7 @@ async function loadLang(lang) {
   } else if (!result.ok) {
     renderStatus("Could not fetch the vocab sheet — check the CSV URL and your connection.");
   }
+  pacingSummary = introduceNewCards(lang);
   queue = shuffleWithinDueDate(getDueCards(lang));
   nextCard();
 }

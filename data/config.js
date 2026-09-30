@@ -35,3 +35,13 @@ export const READING_CONFIG = {
     ],
   },
 };
+
+// Flashcard pacing. Words are ordered by the sheet's optional "frequency"
+// column (highest first) and unlocked in batches of like frequency. A new
+// batch only opens once enough of the previous batch is mastered.
+export const PACING_CONFIG = {
+  newPerDay: 10,          // max new words introduced per language per day
+  minBatchSize: 20,       // adjacent frequency values merge until a batch has at least this many words
+  masteryInterval: 7,     // a card counts as "mastered" once its review interval is this many days or more
+  unlockThreshold: 0.8,   // fraction of the previous batch that must be mastered to open the next
+};
