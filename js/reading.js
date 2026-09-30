@@ -52,9 +52,25 @@ function renderPassage(verses) {
     el.innerHTML = `<p class="empty-note">No text loaded for this passage yet.</p>`;
     return;
   }
-  el.innerHTML = verses
-    .map((v) => `<p><strong>${v.ref}</strong> ${v.text}</p>`)
-    .join("");
+  let html = "", chapter = null, open = false;
+  verses.forEach((v, i) => {
+    const m = /^(.*\S)\s+(\d+):(\d+)$/.exec(v.ref);
+    const heading = m ? `${m[1]} ${m[2]}` : null;
+    if (heading && heading !== chapter) {
+      if (open) html += "</p>";
+      html += `<h3 class="chapter-head">${heading}</h3>`;
+      chapter = heading;
+      open = false;
+    }
+    if (!open || v.para || i === 0) {
+      if (open) html += "</p>";
+      html += "<p>";
+      open = true;
+    }
+    html += `<sup class="vnum">${m ? m[3] : v.ref}</sup>${v.text} `;
+  });
+  if (open) html += "</p>";
+  el.innerHTML = html;
 }
 
 async function render() {

@@ -12,3 +12,5 @@ Each book file (referenced by `file` in `data/config.js`'s `READING_CONFIG`) is 
 The reading module slices this array into fixed-size chunks (`versesPerSitting` in config — 5 for Greek, 3 for Hebrew) and tracks how far you've gotten per language in the browser's local storage. "Mark as Read & Continue" advances to the next chunk, or the next book once the current one is finished.
 
 Text should come from a real critical text / your own reading software export, not generated — this scaffold is empty until you add it.
+
+A verse object may also carry `"para": true`, meaning a new paragraph starts at that verse. The Reading tab shows the chapter as a heading, then verse numbers only, run in line within paragraphs. The inbox importer sets `para` from blank lines in the pasted text.

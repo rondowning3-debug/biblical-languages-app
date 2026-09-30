@@ -150,6 +150,21 @@ main {
   min-height: 120px;
 }
 
+#reading-passage .chapter-head {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+}
+
+#reading-passage p {
+  margin: 0 0 1rem;
+}
+
+#reading-passage .vnum {
+  font-size: 0.6em;
+  font-weight: bold;
+  margin-right: 0.25em;
+}
+
 #reading-controls {
   margin-top: 1rem;
 }

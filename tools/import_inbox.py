@@ -160,14 +160,23 @@ def slug(title):
 
 def split_verses(lines):
     """Split a passage with inline verse numbers ("1 text 2 text ...") into
-    [(n, text)]. Numbers must run 1..N in order or ValueError is raised."""
-    text = " ".join(l.strip() for l in lines if l.strip())
-    parts = re.split(r"(?:(?<=\s)|^)(\d+)\s+", text)
-    if parts[0].strip() or len(parts) < 3:
-        raise ValueError("text does not begin with a verse number")
-    verses = [(int(parts[i]), parts[i + 1].strip()) for i in range(1, len(parts), 2)]
-    if [n for n, _ in verses] != list(range(1, len(verses) + 1)):
-        raise ValueError("verse numbers are not sequential from 1: " + ", ".join(str(n) for n, _ in verses))
+    [(n, text, para)]. A blank line in the inbox starts a new paragraph; para is
+    True on the first verse of each paragraph. Numbers must run 1..N in order
+    or ValueError is raised."""
+    blocks, cur = [], []
+    for l in lines:
+        if l.strip(): cur.append(l.strip())
+        elif cur: blocks.append(" ".join(cur)); cur = []
+    if cur: blocks.append(" ".join(cur))
+    verses = []
+    for block in blocks:
+        parts = re.split(r"(?:(?<=\s)|^)(\d+)\s+", block)
+        if parts[0].strip() or len(parts) < 3:
+            raise ValueError("a paragraph does not begin with a verse number")
+        for i in range(1, len(parts), 2):
+            verses.append((int(parts[i]), parts[i + 1].strip(), i == 1))
+    if [n for n, _, _ in verses] != list(range(1, len(verses) + 1)):
+        raise ValueError("verse numbers are not sequential from 1: " + ", ".join(str(n) for n, _, _ in verses))
     return verses
 
 
@@ -185,7 +194,7 @@ def import_reading(e, dry, written, skipped):
     prefix = f"{book} {chap}:"
     if any(v["ref"].startswith(prefix) for v in data):
         skipped.append(f"readings/{e['lang']}: {e['title']} (chapter already exists)"); return
-    data += [{"ref": f"{prefix}{n}", "text": t} for n, t in verses]
+    data += [{"ref": f"{prefix}{n}", "text": t, **({"para": True} if para else {})} for n, t, para in verses]
     data.sort(key=lambda v: tuple(int(x) for x in re.search(r"(\d+):(\d+)$", v["ref"]).groups()))
     written.append(f"readings/{e['lang']}: {e['title']} -> {path.name} ({len(verses)} verses)")
     if not dry:
