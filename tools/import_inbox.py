@@ -15,7 +15,7 @@ import hashlib, html, json, re, sys, unicodedata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-HEAD = re.compile(r"^##\s+(Grammar|Paradigm)\s*\|\s*(Greek|Hebrew)\s*\|\s*(.+?)\s*$", re.I)
+HEAD = re.compile(r"^##\s+(Grammar|Paradigms?|Readings?)\s*\|\s*(Greek|Hebrew)\s*\|\s*(.+?)\s*$", re.I)
 
 
 def inline(text):
@@ -122,7 +122,7 @@ def parse(path):
             fence = not fence
         m = None if fence else HEAD.match(line)
         if m:
-            cur = {"kind": m[1].lower(), "lang": m[2].lower(), "title": m[3], "lines": []}
+            cur = {"kind": {"paradigms": "paradigm", "readings": "reading"}.get(m[1].lower(), m[1].lower()), "lang": m[2].lower(), "title": m[3], "lines": []}
             entries.append(cur)
         elif cur is not None:
             if not fence and re.fullmatch(r"-{3,}", line.strip()):
@@ -158,6 +158,41 @@ def slug(title):
     return s[:50] or "entry-" + hashlib.md5(title.encode()).hexdigest()[:6]
 
 
+def split_verses(lines):
+    """Split a passage with inline verse numbers ("1 text 2 text ...") into
+    [(n, text)]. Numbers must run 1..N in order or ValueError is raised."""
+    text = " ".join(l.strip() for l in lines if l.strip())
+    parts = re.split(r"(?:(?<=\s)|^)(\d+)\s+", text)
+    if parts[0].strip() or len(parts) < 3:
+        raise ValueError("text does not begin with a verse number")
+    verses = [(int(parts[i]), parts[i + 1].strip()) for i in range(1, len(parts), 2)]
+    if [n for n, _ in verses] != list(range(1, len(verses) + 1)):
+        raise ValueError("verse numbers are not sequential from 1: " + ", ".join(str(n) for n, _ in verses))
+    return verses
+
+
+def import_reading(e, dry, written, skipped):
+    m = re.fullmatch(r"(.+?)\s+(\d+)", e["title"])
+    if not m:
+        skipped.append(f"readings/{e['lang']}: {e['title']} (title must be 'Book Chapter')"); return
+    book, chap = m[1], int(m[2])
+    try:
+        verses = split_verses(e["lines"])
+    except ValueError as err:
+        skipped.append(f"readings/{e['lang']}: {e['title']} ({err})"); return
+    path = ROOT / "content" / "readings" / e["lang"] / (slug(book) + ".json")
+    data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+    prefix = f"{book} {chap}:"
+    if any(v["ref"].startswith(prefix) for v in data):
+        skipped.append(f"readings/{e['lang']}: {e['title']} (chapter already exists)"); return
+    data += [{"ref": f"{prefix}{n}", "text": t} for n, t in verses]
+    data.sort(key=lambda v: tuple(int(x) for x in re.search(r"(\d+):(\d+)$", v["ref"]).groups()))
+    written.append(f"readings/{e['lang']}: {e['title']} -> {path.name} ({len(verses)} verses)")
+    if not dry:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def main():
     inbox = Path(sys.argv[1]); dry = "--dry-run" in sys.argv
     header, entries = parse(inbox)
@@ -169,6 +204,8 @@ def main():
         print("No entries found in inbox."); return
     written, skipped = [], []
     for e in entries:
+        if e["kind"] == "reading":
+            import_reading(e, dry, written, skipped); continue
         section = "grammar" if e["kind"] == "grammar" else "paradigms"
         folder = ROOT / "content" / section / e["lang"]
         idx_path = folder / "index.json"
