@@ -174,8 +174,8 @@ main {
 }
 .topic-viewer-content th,
 .topic-viewer-content td {
-  border: 1px solid rgba(128, 128, 128, 0.4);
-  padding: 0.4rem 0.6rem;
+  border: none;
+  padding: 0.4rem 1.2rem 0.4rem 0;
   text-align: left;
 }
 .topic-viewer-content th {
