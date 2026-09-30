@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Biblical Languages</title>
-<link rel="stylesheet" href="css/style.css?v=2026-09-29b">
+<link rel="stylesheet" href="css/style.css?v=2026-09-30a">
 </head>
 <body>
 <header>
@@ -12,6 +12,7 @@
   <nav id="main-nav">
     <button data-view="flashcards" class="nav-btn active">Flashcards</button>
     <button data-view="grammar" class="nav-btn">Grammar</button>
+    <button data-view="paradigms" class="nav-btn">Paradigms</button>
     <button data-view="reading" class="nav-btn">Reading</button>
   </nav>
 </header>
@@ -45,9 +46,20 @@
       <button data-lang="greek" class="lang-btn active">Greek</button>
       <button data-lang="hebrew" class="lang-btn">Hebrew</button>
     </div>
-    <div id="grammar-layout">
-      <ul id="grammar-topic-list"></ul>
-      <div id="grammar-content"></div>
+    <div id="grammar-content" class="topic-viewer-content"></div>
+    <div class="topic-controls">
+      <button id="grammar-next-btn">Show Another</button>
+    </div>
+  </section>
+
+  <section id="view-paradigms" class="view">
+    <div class="lang-switch">
+      <button data-lang="greek" class="lang-btn active">Greek</button>
+      <button data-lang="hebrew" class="lang-btn">Hebrew</button>
+    </div>
+    <div id="paradigms-content" class="topic-viewer-content"></div>
+    <div class="topic-controls">
+      <button id="paradigms-next-btn">Show Another</button>
     </div>
   </section>
 

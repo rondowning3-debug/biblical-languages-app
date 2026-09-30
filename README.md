@@ -1,10 +1,10 @@
 # Biblical Languages Study App
 
-Personal Greek/Hebrew study tool: vocab flashcards (spaced repetition), grammar reference, and a paced reading progression through the GNT and Hebrew OT.
+Personal Greek/Hebrew study tool: vocab flashcards (spaced repetition), grammar and paradigm reference, and a paced reading progression through the GNT and Hebrew OT.
 
 ## Status
 
-Framework scaffold — engine works, content is empty. See `content/grammar/README.md` and `content/readings/README.md` for how to add real content, and `data/config.js` for the two things that need filling in:
+Framework built out — engine works, most content still to be added. Grammar and Paradigms both show one random entry at a time (with a "Show Another" button to swap in a different one) rather than a browsable list. See `content/grammar/README.md` and `content/paradigms/README.md` and `content/readings/README.md` for how to add real content, and `data/config.js` for the two things that need filling in:
 
 1. **Vocab:** Google Sheet CSV URLs (Greek + Hebrew tabs, published to web). See below.
 2. **Reading plan:** book order is partially filled in (from Ron's stated progression); extend as decided.

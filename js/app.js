@@ -1,5 +1,6 @@
 import { initFlashcards } from "./flashcards.js";
 import { initGrammar } from "./grammar.js";
+import { initParadigms } from "./paradigms.js";
 import { initReading } from "./reading.js";
 
 function showView(name) {
@@ -15,4 +16,5 @@ document.querySelectorAll(".nav-btn").forEach((btn) => {
 
 initFlashcards();
 initGrammar();
+initParadigms();
 initReading();
