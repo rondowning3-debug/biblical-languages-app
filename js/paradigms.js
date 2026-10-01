@@ -1,4 +1,4 @@
-import { initTopicViewer } from "./topicViewer.js";
+import { initTopicViewer } from "./topicViewer.js?v=2026-10-01b";
 
 export function initParadigms() {
   initTopicViewer({

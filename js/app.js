@@ -1,7 +1,7 @@
-import { initFlashcards } from "./flashcards.js";
-import { initGrammar } from "./grammar.js";
-import { initParadigms } from "./paradigms.js";
-import { initReading } from "./reading.js";
+import { initFlashcards } from "./flashcards.js?v=2026-10-01b";
+import { initGrammar } from "./grammar.js?v=2026-10-01b";
+import { initParadigms } from "./paradigms.js?v=2026-10-01b";
+import { initReading } from "./reading.js?v=2026-10-01b";
 
 function showView(name) {
   document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));

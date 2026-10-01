@@ -1,6 +1,6 @@
-import { VOCAB_SOURCES } from "../data/config.js";
-import { tokenizeCsv } from "./csv.js";
-import { syncDeck, getDueCards, getDeckSize, reviewCard, introduceNewCards } from "./srs.js";
+import { VOCAB_SOURCES } from "../data/config.js?v=2026-10-01b";
+import { tokenizeCsv } from "./csv.js?v=2026-10-01b";
+import { syncDeck, getDueCards, getDeckSize, reviewCard, introduceNewCards } from "./srs.js?v=2026-10-01b";
 
 let currentLang = "greek";
 let queue = [];
