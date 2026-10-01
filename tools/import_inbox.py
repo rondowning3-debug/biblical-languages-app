@@ -171,6 +171,9 @@ def split_verses(lines):
     if cur: blocks.append(" ".join(cur))
     verses = []
     for block in blocks:
+        # standing practice: a verse number butted against sentence-end punctuation
+        # ("...δίκαιον·2 καὶ") gets a space put in front of it
+        block = re.sub(r"(?<=[.,;:!?\u00B7\u0387\u037E\u05C3])(\d+)(?=\s)", r" \1", block)
         parts = re.split(r"(?:(?<=\s)|^)(\d+)\s+", block)
         if parts[0].strip() or len(parts) < 3:
             raise ValueError("a paragraph does not begin with a verse number")
