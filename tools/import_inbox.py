@@ -20,6 +20,7 @@ HEAD = re.compile(r"^##\s+(Grammar|Paradigms?|Readings?)\s*\|\s*(Greek|Hebrew)\s
 
 def inline(text):
     t = html.escape(text, quote=False)
+    t = re.sub(r"\*\*\*(.+?)\*\*\*", r"<strong><em>\1</em></strong>", t)
     t = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", t)
     t = re.sub(r"(?<![*\w])\*(?!\s)(.+?)(?<!\s)\*(?![*\w])", r"<em>\1</em>", t)
     return t
