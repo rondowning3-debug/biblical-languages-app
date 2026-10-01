@@ -1,4 +1,5 @@
 import { READING_CONFIG } from "../data/config.js";
+import { wrapVerse, decoratePassage, initParsingClicks } from "./parsing.js";
 
 const STORAGE_KEY = "blapp_reading_v1";
 let currentLang = "greek";
@@ -46,7 +47,7 @@ function renderStatus(text) {
   document.getElementById("reading-status").textContent = text;
 }
 
-function renderPassage(verses) {
+function renderPassage(verses, lang) {
   const el = document.getElementById("reading-passage");
   if (!verses || verses.length === 0) {
     el.innerHTML = `<p class="empty-note">No text loaded for this passage yet.</p>`;
@@ -67,10 +68,12 @@ function renderPassage(verses) {
       html += "<p>";
       open = true;
     }
-    html += `<sup class="vnum">${m ? m[3] : v.ref}</sup>${v.text} `;
+    const body = m && lang === "greek" ? wrapVerse(v.text, m[2], m[3]) : v.text;
+    html += `<sup class="vnum">${m ? m[3] : v.ref}</sup>${body} `;
   });
   if (open) html += "</p>";
   el.innerHTML = html;
+  if (lang === "greek") decoratePassage(el, lang, verses.map((v) => v.ref));
 }
 
 async function render() {
@@ -96,7 +99,7 @@ async function render() {
 
   const chunk = book.slice(pos.verseIndex, pos.verseIndex + config.versesPerSitting);
   renderStatus(`${bookEntry.label} — verses ${pos.verseIndex + 1}–${pos.verseIndex + chunk.length} of ${book.length}`);
-  renderPassage(chunk);
+  renderPassage(chunk, currentLang);
   currentBook = book;
 }
 
@@ -121,6 +124,7 @@ async function loadLang(lang) {
 }
 
 export function initReading() {
+  initParsingClicks(document.getElementById("reading-passage"));
   document.getElementById("mark-read-btn").addEventListener("click", markReadAndContinue);
 
   document.querySelectorAll("#view-reading .lang-btn").forEach((btn) => {

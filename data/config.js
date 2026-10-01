@@ -36,6 +36,20 @@ export const READING_CONFIG = {
   },
 };
 
+// Word-by-word parsing for the Reading tab. One Google Sheet per book, one
+// tab per chapter, each tab published to web as CSV (File -> Share -> Publish
+// to web -> pick the tab -> CSV). Paste each chapter tab's URL below under the
+// book label used in the reading config. Generate a chapter's pre-filled rows
+// (Verse, Pos, Word) with tools/parsing_template.py. Chapters not listed here
+// simply have no clickable words.
+export const PARSING_SOURCES = {
+  greek: {
+    "1 John": {
+      1: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTzoys20_PMJb7rrAmjknUlN8e3RG3hwEbTUeZ2MyrjjplkgZmkR7B73vy4Rz_LEoMqZ1CaeT0LOf1-/pub?gid=0&single=true&output=csv",
+    },
+  },
+};
+
 // Flashcard pacing. Words are ordered by the sheet's optional "frequency"
 // column (highest first) and unlocked in batches of like frequency. A new
 // batch only opens once enough of the previous batch is mastered.
