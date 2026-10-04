@@ -101,7 +101,7 @@ main {
   text-align: center;
 }
 
-.card-face { font-size: 1.6rem; }
+.card-face { font-size: 1.6rem; white-space: pre-line; }
 .card-face.hidden { display: none; }
 
 #card-controls {
