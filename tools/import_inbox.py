@@ -174,7 +174,8 @@ def split_verses(lines):
         # standing practice: a verse number butted against sentence-end punctuation
         # ("...δίκαιον·2 καὶ") gets a space put in front of it
         block = re.sub(r"(?<=[.,;:!?\u00B7\u0387\u037E\u05C3])(\d+)(?=\s)", r" \1", block)
-        parts = re.split(r"(?:(?<=\s)|^)(\d+)\s+", block)
+        # Greek: number + space; Hebrew (BHS site): number butted directly against a Hebrew letter
+        parts = re.split(r"(?:(?<=\s)|^)(\d+)(?:\s+|(?=[\u0590-\u05FF]))", block)
         if parts[0].strip() or len(parts) < 3:
             raise ValueError("a paragraph does not begin with a verse number")
         for i in range(1, len(parts), 2):
