@@ -1,13 +1,14 @@
-import { PARSING_SOURCES } from "../data/config.js?v=2026-10-03b";
-import { tokenizeCsv } from "./csv.js?v=2026-10-03b";
+import { PARSING_SOURCES } from "../data/config.js?v=2026-10-04";
+import { tokenizeCsv } from "./csv.js?v=2026-10-04";
 
 // Which sheet fields the popup shows for each Type (lowercase). Edit freely.
 // A Type not listed here falls back to every non-empty field.
 const FIELD_LABELS = {
   lexical: "Lexical form", translation: "Translation", case: "Case", person: "Person",
   number: "Number", gender: "Gender", tense: "Tense", voice: "Voice", mood: "Mood", notes: "Notes",
+  root: "Root", state: "State", stem: "Stem", conjugation: "Conjugation",
 };
-const FIELDS_BY_TYPE = {
+const GREEK_FIELDS_BY_TYPE = {
   noun: ["lexical", "translation", "case", "number", "gender"],
   verb: ["lexical", "translation", "person", "number", "tense", "voice", "mood"],
   participle: ["lexical", "translation", "case", "number", "gender", "tense", "voice"],
@@ -18,23 +19,48 @@ const FIELDS_BY_TYPE = {
   preposition: ["lexical", "translation"],
   conjunction: ["lexical", "translation"],
 };
+// Hebrew: no case/tense/voice/mood; verbs carry Stem + Conjugation. Prefixed
+// particles (waw, article, ב/כ/ל/מ) and pronominal suffixes go in Notes.
+const HEBREW_FIELDS_BY_TYPE = {
+  noun: ["lexical", "translation", "gender", "number", "state", "notes"],
+  "proper noun": ["lexical", "translation", "gender", "number", "notes"],
+  verb: ["lexical", "translation", "root", "stem", "conjugation", "person", "gender", "number", "notes"],
+  participle: ["lexical", "translation", "root", "stem", "gender", "number", "state", "notes"],
+  "infinitive construct": ["lexical", "translation", "root", "stem", "notes"],
+  "infinitive absolute": ["lexical", "translation", "root", "stem", "notes"],
+  adjective: ["lexical", "translation", "gender", "number", "state", "notes"],
+  pronoun: ["lexical", "translation", "person", "gender", "number", "notes"],
+  preposition: ["lexical", "translation", "notes"],
+  conjunction: ["lexical", "translation", "notes"],
+  adverb: ["lexical", "translation", "notes"],
+  particle: ["lexical", "translation", "notes"],
+  "direct object marker": ["lexical", "translation", "notes"],
+  numeral: ["lexical", "translation", "gender", "number", "state", "notes"],
+  interjection: ["lexical", "translation", "notes"],
+};
+const FIELDS_BY_LANG = { greek: GREEK_FIELDS_BY_TYPE, hebrew: HEBREW_FIELDS_BY_TYPE };
 
 // Must match tools/parsing_template.py: split on whitespace, strip surrounding
-// punctuation (the elision mark ’ is kept).
-const STRIP = /^[,.·;:!?·;()[\]“”"—]+|[,.·;:!?·;()[\]“”"—]+$/g;
+// punctuation (the elision mark ’ is kept; Hebrew sof pasuq ׃ and paseq ׀ included).
+const STRIP = /^[,.·;:!?·;()[\]“”"—\u05C3\u05C0]+|[,.·;:!?·;()[\]“”"—\u05C3\u05C0]+$/g;
 export const cleanToken = (tok) => tok.replace(STRIP, "").normalize("NFC");
 
 const escapeHtml = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 // Wraps each word of a verse in a span carrying its chapter:verse:pos key.
 export function wrapVerse(text, chapter, verse) {
-  return text.split(/\s+/).filter(Boolean).map((tok, i) =>
-    `<span class="pw" data-key="${chapter}:${verse}:${i + 1}" data-word="${escapeHtml(cleanToken(tok))}">${escapeHtml(tok)}</span>`
-  ).join(" ");
+  // Tokens that are only punctuation (e.g. a stand-alone paseq ׀) stay plain text and take no position.
+  let pos = 0;
+  return text.split(/\s+/).filter(Boolean).map((tok) => {
+    const word = cleanToken(tok);
+    if (!word) return escapeHtml(tok);
+    return `<span class="pw" data-key="${chapter}:${verse}:${++pos}" data-word="${escapeHtml(word)}">${escapeHtml(tok)}</span>`;
+  }).join(" ");
 }
 
 const cache = {}; // `${lang}|${book}|${chapter}` -> Map(key -> row) | null
 let current = new Map();
+let currentLang = "greek";
 
 async function loadChapter(lang, book, chapter) {
   const id = `${lang}|${book}|${chapter}`;
@@ -61,6 +87,7 @@ function parseRows(text, chapter) {
     lexical: idx("lexical form"), translation: idx("translation"),
     case: idx("case"), person: idx("person"), number: idx("number"), gender: idx("gender"),
     tense: idx("tense"), voice: idx("voice"), mood: idx("mood"), notes: idx("notes"),
+    root: idx("root"), state: idx("state"), stem: idx("stem"), conjugation: idx("conjugation"),
   };
   if (col.verse === -1 || col.pos === -1) return new Map();
   const map = new Map();
@@ -79,6 +106,7 @@ function parseRows(text, chapter) {
 export async function decoratePassage(container, lang, verseRefs) {
   closePopup();
   current = new Map();
+  currentLang = lang;
   const chapters = new Set();
   for (const ref of verseRefs) {
     const m = /^(.*\S)\s+(\d+):\d+$/.exec(ref);
@@ -108,7 +136,7 @@ function showPopup(el) {
   closePopup();
   el.classList.add("active");
   const type = row.type.toLowerCase();
-  const fields = FIELDS_BY_TYPE[type] || Object.keys(FIELD_LABELS);
+  const fields = FIELDS_BY_LANG[currentLang]?.[type] || Object.keys(FIELD_LABELS);
   const lines = fields.filter((f) => row[f]).map((f) =>
     `<div class="pp-row"><span class="pp-label">${FIELD_LABELS[f]}</span><span class="pp-val">${escapeHtml(row[f])}</span></div>`
   ).join("");

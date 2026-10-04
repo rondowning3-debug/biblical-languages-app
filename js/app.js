@@ -1,7 +1,7 @@
-import { initFlashcards } from "./flashcards.js?v=2026-10-03b";
-import { initGrammar } from "./grammar.js?v=2026-10-03b";
-import { initParadigms } from "./paradigms.js?v=2026-10-03b";
-import { initReading } from "./reading.js?v=2026-10-03b";
+import { initFlashcards } from "./flashcards.js?v=2026-10-04";
+import { initGrammar } from "./grammar.js?v=2026-10-04";
+import { initParadigms } from "./paradigms.js?v=2026-10-04";
+import { initReading } from "./reading.js?v=2026-10-04";
 
 // One global language (top buttons) drives every tab. Each tab module exposes
 // show(lang): it (re)loads only when the language differs from what it last

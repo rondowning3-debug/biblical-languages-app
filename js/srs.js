@@ -1,7 +1,7 @@
 // Minimal SM-2 style spaced-repetition engine.
 // Card shape: { id, word, translation, lang, ease, interval, reps, dueDate }
 
-import { PACING_CONFIG, PRESUMED_KNOWN, FAMILY_PACING } from "../data/config.js?v=2026-10-03b";
+import { PACING_CONFIG, PRESUMED_KNOWN, FAMILY_PACING } from "../data/config.js?v=2026-10-04";
 
 const STORAGE_KEY = "blapp_srs_v1";
 const PACING_KEY = "blapp_pacing_v1";

@@ -1,5 +1,5 @@
-import { READING_CONFIG } from "../data/config.js?v=2026-10-03b";
-import { wrapVerse, decoratePassage, initParsingClicks } from "./parsing.js?v=2026-10-03b";
+import { READING_CONFIG } from "../data/config.js?v=2026-10-04";
+import { wrapVerse, decoratePassage, initParsingClicks } from "./parsing.js?v=2026-10-04";
 
 const STORAGE_KEY = "blapp_reading_v1";
 let currentLang = null;

@@ -1,6 +1,6 @@
-import { VOCAB_SOURCES } from "../data/config.js?v=2026-10-03b";
-import { tokenizeCsv } from "./csv.js?v=2026-10-03b";
-import { syncDeck, getDueCards, getDeckSize, reviewCard, introduceNewCards } from "./srs.js?v=2026-10-03b";
+import { VOCAB_SOURCES } from "../data/config.js?v=2026-10-04";
+import { tokenizeCsv } from "./csv.js?v=2026-10-04";
+import { syncDeck, getDueCards, getDeckSize, reviewCard, introduceNewCards } from "./srs.js?v=2026-10-04";
 
 let currentLang = null;
 let queue = [];

@@ -11,7 +11,7 @@ import argparse, json, re, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-STRIP = ",.·;:!?·;()[]“”\"—"
+STRIP = ",.·;:!?·;()[]“”\"—\u05C3\u05C0"
 HEADER = ["Verse", "Pos", "Word", "Type", "Translation", "Lexical Form",
           "Case", "Person", "Number", "Gender", "Tense", "Voice", "Mood", "Notes"]
 
