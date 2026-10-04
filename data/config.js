@@ -60,6 +60,20 @@ export const PACING_CONFIG = {
   unlockThreshold: 0.8,   // fraction of the previous batch that must be mastered to open the next
 };
 
+// Family pacing (root + derivatives), used when a language's sheet tab has a
+// "Cognate" column. Rows are entered in book order: a row marked with anything
+// in Cognate heads a family; unmarked rows below it are its derivatives (a row
+// with no head above it is treated as a head of its own). Cognates are paced
+// as the primary stream (batches by frequency, mastery gate counts cognates
+// only). A derivative is introduced only when its root is mastered AND its own
+// frequency is at or above the floor of the latest opened cognate band, using
+// whatever daily slots the cognates leave. Nothing below minFrequency is ever
+// introduced. Languages not listed (or tabs without a Cognate column) use the
+// flat pacing above.
+export const FAMILY_PACING = {
+  hebrew: { minFrequency: 50 },
+};
+
 // Words above a frequency cutoff are presumed already known: unless the
 // sheet's "Star" column is filled for that word, its card is created as
 // mastered, with its first review scattered randomly over the next
@@ -67,4 +81,8 @@ export const PACING_CONFIG = {
 // pacing. Languages not listed here have no presumed-known words.
 export const PRESUMED_KNOWN = {
   greek: { minFrequency: 75, interval: 30 },
+  // Hebrew is inverted: every word is presumed unknown, and a filled "Star"
+  // cell means "I already know this" - seeded as mastered with its first
+  // review scattered over the next `interval` days.
+  hebrew: { starredOnly: true, interval: 30 },
 };

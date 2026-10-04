@@ -1,7 +1,7 @@
 // Minimal SM-2 style spaced-repetition engine.
 // Card shape: { id, word, translation, lang, ease, interval, reps, dueDate }
 
-import { PACING_CONFIG, PRESUMED_KNOWN } from "../data/config.js?v=2026-10-01b";
+import { PACING_CONFIG, PRESUMED_KNOWN, FAMILY_PACING } from "../data/config.js?v=2026-10-03a";
 
 const STORAGE_KEY = "blapp_srs_v1";
 const PACING_KEY = "blapp_pacing_v1";
@@ -52,23 +52,38 @@ function todayPlus(days) {
 // high-frequency words that haven't been studied are seeded as mastered with
 // a scattered due date; a starred word that was previously seeded this way is
 // reset so it goes through normal pacing. Real review history is never touched.
+function seedAsKnown(card, rule) {
+  card.introduced = true;
+  card.presumed = true;
+  card.reps = 3;
+  card.interval = rule.interval;
+  card.dueDate = todayPlus(Math.floor(Math.random() * rule.interval));
+}
+
+function resetToNew(card) {
+  card.presumed = false;
+  card.introduced = false;
+  card.reps = 0;
+  card.interval = 0;
+  card.ease = 2.5;
+  card.dueDate = todayStamp();
+}
+
 function applyPresumption(card, row, lang) {
   const rule = PRESUMED_KNOWN[lang];
-  if (!rule || card.freq == null) return;
+  if (!rule) return;
+  if (rule.starredOnly) {
+    // Inverted: starred words are the presumed-known ones.
+    if (row.starred && card.introduced === false && card.reps === 0) seedAsKnown(card, rule);
+    else if (!row.starred && card.presumed) resetToNew(card);
+    return;
+  }
+  if (card.freq == null) return;
   const qualifies = card.freq >= rule.minFrequency;
   if (qualifies && !row.starred && card.introduced === false && card.reps === 0) {
-    card.introduced = true;
-    card.presumed = true;
-    card.reps = 3;
-    card.interval = rule.interval;
-    card.dueDate = todayPlus(Math.floor(Math.random() * rule.interval));
+    seedAsKnown(card, rule);
   } else if (row.starred && card.presumed) {
-    card.presumed = false;
-    card.introduced = false;
-    card.reps = 0;
-    card.interval = 0;
-    card.ease = 2.5;
-    card.dueDate = todayStamp();
+    resetToNew(card);
   }
 }
 
@@ -88,6 +103,9 @@ export function syncDeck(lang, rows) {
       // cards from before pacing existed: anything already reviewed counts as introduced
       if (state[id].introduced === undefined) state[id].introduced = state[id].reps > 0;
     }
+    // family structure (Cognate column); cleared if the sheet no longer has one
+    state[id].role = row.role;
+    state[id].rootId = row.rootWord ? `${lang}:${row.rootWord}` : undefined;
     applyPresumption(state[id], row, lang);
   });
   saveState(state);
@@ -195,6 +213,78 @@ function isMastered(card) {
 // Introduces new words (respecting the daily cap and the mastery gate) and
 // returns a summary for the status line.
 export function introduceNewCards(lang) {
+  const cfg = FAMILY_PACING[lang];
+  if (cfg && Object.values(loadState()).some((c) => c.lang === lang && c.role)) {
+    return introduceFamilyCards(lang, cfg);
+  }
+  return introduceFlatCards(lang);
+}
+
+// Family pacing: see FAMILY_PACING in config. Cognates (family heads) are the
+// primary stream; derivatives fill leftover daily slots once their root is
+// mastered and their frequency reaches the latest opened cognate band.
+function introduceFamilyCards(lang, cfg) {
+  const state = loadState();
+  const pacing = loadPacing();
+  const today = todayStamp();
+  if (!pacing[lang] || pacing[lang].date !== today) pacing[lang] = { date: today, count: 0 };
+
+  const all = sortedCards(state, lang);
+  const aboveFloor = (c) => c.freq != null && c.freq >= cfg.minFrequency;
+  const heads = all.filter((c) => c.role === "head" && (aboveFloor(c) || c.introduced !== false));
+  const derivs = all.filter((c) => c.role === "derivative");
+  const batches = buildBatches(heads);
+
+  let remaining = PACING_CONFIG.newPerDay - pacing[lang].count;
+  const introduce = (card) => {
+    card.introduced = true;
+    card.dueDate = today;
+    state[card.id] = card;
+    pacing[lang].count++;
+    remaining--;
+  };
+
+  // Cognates first, gated on the previous cognate band.
+  for (let b = 0; b < batches.length && remaining > 0; b++) {
+    const pending = batches[b].filter((c) => c.introduced === false);
+    if (pending.length === 0) continue;
+    if (b > 0) {
+      const prev = batches[b - 1];
+      if (prev.filter(isMastered).length / prev.length < PACING_CONFIG.unlockThreshold) break;
+    }
+    pending.slice(0, remaining).forEach(introduce);
+  }
+
+  // Floor of the latest opened band: derivatives at or above it are in range.
+  let openBand = -1;
+  batches.forEach((batch, b) => {
+    if (batch.some((c) => c.introduced !== false)) openBand = b;
+  });
+  const floor = openBand === -1
+    ? Infinity
+    : Math.min(...batches[openBand].map((c) => c.freq ?? Infinity));
+  const inRange = (c) => c.introduced === false && aboveFloor(c) && c.freq >= floor;
+  const rootMastered = (c) => !!state[c.rootId] && isMastered(state[c.rootId]);
+
+  for (const card of derivs.filter((c) => inRange(c) && rootMastered(c))) {
+    if (remaining <= 0) break;
+    introduce(card);
+  }
+
+  saveState(state);
+  savePacing(pacing);
+
+  const summary = { batchIndex: 0, batchCount: batches.length, masteredPct: 0, newToday: pacing[lang].count, locked: false, waiting: 0 };
+  summary.waiting = derivs.filter((c) => inRange(c) && !rootMastered(c)).length;
+  if (batches.length === 0) return summary;
+  const cur = batches.findIndex((batch) => !batch.every(isMastered));
+  summary.batchIndex = cur === -1 ? batches.length - 1 : cur;
+  const curBatch = batches[summary.batchIndex];
+  summary.masteredPct = Math.round((curBatch.filter(isMastered).length / curBatch.length) * 100);
+  return summary;
+}
+
+function introduceFlatCards(lang) {
   const state = loadState();
   const batches = buildBatches(sortedCards(state, lang));
   const pacing = loadPacing();

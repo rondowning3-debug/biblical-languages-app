@@ -1,6 +1,6 @@
-import { VOCAB_SOURCES } from "../data/config.js?v=2026-10-01b";
-import { tokenizeCsv } from "./csv.js?v=2026-10-01b";
-import { syncDeck, getDueCards, getDeckSize, reviewCard, introduceNewCards } from "./srs.js?v=2026-10-01b";
+import { VOCAB_SOURCES } from "../data/config.js?v=2026-10-03a";
+import { tokenizeCsv } from "./csv.js?v=2026-10-03a";
+import { syncDeck, getDueCards, getDeckSize, reviewCard, introduceNewCards } from "./srs.js?v=2026-10-03a";
 
 let currentLang = "greek";
 let queue = [];
@@ -20,14 +20,31 @@ function parseCsv(text) {
   const transIdx = header.indexOf("translation");
   const freqIdx = header.indexOf("frequency");
   const starIdx = header.indexOf("star");
+  const cogIdx = header.indexOf("cognate");
   if (wordIdx === -1 || transIdx === -1) return [];
 
-  return rows.slice(1).map((cols) => ({
-    word: (cols[wordIdx] || "").trim(),
-    translation: (cols[transIdx] || "").trim(),
-    freq: freqIdx === -1 ? null : parseFreq(cols[freqIdx]),
-    starred: starIdx !== -1 && (cols[starIdx] || "").trim() !== "",
-  })).filter((r) => r.word);
+  // Family structure: a Cognate-marked row heads a family; unmarked rows
+  // beneath it are its derivatives. Rows before any head stand alone.
+  let headWord = null;
+  return rows.slice(1).map((cols) => {
+    const word = (cols[wordIdx] || "").trim();
+    const row = {
+      word,
+      translation: (cols[transIdx] || "").trim(),
+      freq: freqIdx === -1 ? null : parseFreq(cols[freqIdx]),
+      starred: starIdx !== -1 && (cols[starIdx] || "").trim() !== "",
+    };
+    if (cogIdx !== -1 && word) {
+      if ((cols[cogIdx] || "").trim() !== "" || headWord === null) {
+        row.role = "head";
+        headWord = word;
+      } else {
+        row.role = "derivative";
+        row.rootWord = headWord;
+      }
+    }
+    return row;
+  }).filter((r) => r.word);
 }
 
 async function fetchDeck(lang) {
@@ -90,7 +107,10 @@ function renderCard() {
 
 function pacingText() {
   if (!pacingSummary || pacingSummary.batchCount === 0) return "";
-  const { batchIndex, batchCount, masteredPct, newToday } = pacingSummary;
+  const { batchIndex, batchCount, masteredPct, newToday, waiting } = pacingSummary;
+  if (waiting !== undefined) {
+    return ` · Band ${batchIndex + 1} of ${batchCount} (${masteredPct}% cognates mastered) · ${newToday} new today · ${waiting} derivatives waiting on roots`;
+  }
   return ` · Batch ${batchIndex + 1} of ${batchCount} (${masteredPct}% mastered) · ${newToday} new today`;
 }
 

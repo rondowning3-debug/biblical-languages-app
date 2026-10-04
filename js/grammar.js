@@ -1,4 +1,4 @@
-import { initTopicViewer } from "./topicViewer.js?v=2026-10-01b";
+import { initTopicViewer } from "./topicViewer.js?v=2026-10-03a";
 
 export function initGrammar() {
   initTopicViewer({
