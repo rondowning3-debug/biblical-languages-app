@@ -64,6 +64,11 @@ h1 {
   cursor: pointer;
 }
 
+.lang-switch .lang-btn {
+  font-size: 1.1rem;
+  padding: 0.55rem 1.6rem;
+}
+
 .nav-btn.active, .lang-btn.active {
   background: var(--accent);
   color: #fff;

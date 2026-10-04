@@ -1,8 +1,8 @@
 // Shared viewer for "grammar" and "paradigms" tabs: both show one random
 // entry at a time from content/<section>/<lang>/index.json, with a button
 // to swap in a different random entry (never immediately repeating).
-export function initTopicViewer({ section, contentId, nextBtnId, viewSelector }) {
-  let currentLang = "greek";
+export function initTopicViewer({ section, contentId, nextBtnId }) {
+  let currentLang = null;
   let topics = [];
   let currentIndex = -1;
 
@@ -55,13 +55,9 @@ export function initTopicViewer({ section, contentId, nextBtnId, viewSelector })
 
   document.getElementById(nextBtnId).addEventListener("click", showRandom);
 
-  document.querySelectorAll(`${viewSelector} .lang-btn`).forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(`${viewSelector} .lang-btn`).forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      loadLang(btn.dataset.lang);
-    });
-  });
-
-  loadLang(currentLang);
+  return {
+    show(lang) {
+      if (lang !== currentLang) loadLang(lang);
+    },
+  };
 }

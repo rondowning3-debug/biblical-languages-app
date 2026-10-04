@@ -4,11 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Biblical Languages</title>
-<link rel="stylesheet" href="css/style.css?v=2026-10-03a">
+<link rel="stylesheet" href="css/style.css?v=2026-10-03b">
 </head>
 <body>
 <header>
   <h1>Biblical Languages</h1>
+  <nav id="lang-nav" class="lang-switch">
+    <button data-lang="greek" class="lang-btn active">Greek</button>
+    <button data-lang="hebrew" class="lang-btn">Hebrew</button>
+  </nav>
   <nav id="main-nav">
     <button data-view="flashcards" class="nav-btn active">Flashcards</button>
     <button data-view="grammar" class="nav-btn">Grammar</button>
@@ -19,10 +23,6 @@
 
 <main>
   <section id="view-flashcards" class="view active">
-    <div class="lang-switch">
-      <button data-lang="greek" class="lang-btn active">Greek</button>
-      <button data-lang="hebrew" class="lang-btn">Hebrew</button>
-    </div>
     <div id="flashcard-status" class="status-line"></div>
     <div id="flashcard-area">
       <div id="card" class="card">
@@ -42,10 +42,6 @@
   </section>
 
   <section id="view-grammar" class="view">
-    <div class="lang-switch">
-      <button data-lang="greek" class="lang-btn active">Greek</button>
-      <button data-lang="hebrew" class="lang-btn">Hebrew</button>
-    </div>
     <div id="grammar-content" class="topic-viewer-content"></div>
     <div class="topic-controls">
       <button id="grammar-next-btn">Show Another</button>
@@ -53,10 +49,6 @@
   </section>
 
   <section id="view-paradigms" class="view">
-    <div class="lang-switch">
-      <button data-lang="greek" class="lang-btn active">Greek</button>
-      <button data-lang="hebrew" class="lang-btn">Hebrew</button>
-    </div>
     <div id="paradigms-content" class="topic-viewer-content"></div>
     <div class="topic-controls">
       <button id="paradigms-next-btn">Show Another</button>
@@ -64,10 +56,6 @@
   </section>
 
   <section id="view-reading" class="view">
-    <div class="lang-switch">
-      <button data-lang="greek" class="lang-btn active">Greek</button>
-      <button data-lang="hebrew" class="lang-btn">Hebrew</button>
-    </div>
     <div id="reading-status" class="status-line"></div>
     <div id="reading-passage"></div>
     <div id="reading-controls">
@@ -76,6 +64,6 @@
   </section>
 </main>
 
-<script type="module" src="js/app.js?v=2026-10-03a"></script>
+<script type="module" src="js/app.js?v=2026-10-03b"></script>
 </body>
 </html>

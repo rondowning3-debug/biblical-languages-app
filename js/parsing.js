@@ -1,5 +1,5 @@
-import { PARSING_SOURCES } from "../data/config.js?v=2026-10-03a";
-import { tokenizeCsv } from "./csv.js?v=2026-10-03a";
+import { PARSING_SOURCES } from "../data/config.js?v=2026-10-03b";
+import { tokenizeCsv } from "./csv.js?v=2026-10-03b";
 
 // Which sheet fields the popup shows for each Type (lowercase). Edit freely.
 // A Type not listed here falls back to every non-empty field.

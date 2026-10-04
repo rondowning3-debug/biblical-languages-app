@@ -1,8 +1,8 @@
-import { VOCAB_SOURCES } from "../data/config.js?v=2026-10-03a";
-import { tokenizeCsv } from "./csv.js?v=2026-10-03a";
-import { syncDeck, getDueCards, getDeckSize, reviewCard, introduceNewCards } from "./srs.js?v=2026-10-03a";
+import { VOCAB_SOURCES } from "../data/config.js?v=2026-10-03b";
+import { tokenizeCsv } from "./csv.js?v=2026-10-03b";
+import { syncDeck, getDueCards, getDeckSize, reviewCard, introduceNewCards } from "./srs.js?v=2026-10-03b";
 
-let currentLang = "greek";
+let currentLang = null;
 let queue = [];
 let currentCard = null;
 let pacingSummary = null;
@@ -156,13 +156,9 @@ export function initFlashcards() {
     nextCard();
   });
 
-  document.querySelectorAll("#view-flashcards .lang-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll("#view-flashcards .lang-btn").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      loadLang(btn.dataset.lang);
-    });
-  });
-
-  loadLang(currentLang);
+  return {
+    show(lang) {
+      if (lang !== currentLang) loadLang(lang);
+    },
+  };
 }

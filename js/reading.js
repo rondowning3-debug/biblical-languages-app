@@ -1,8 +1,8 @@
-import { READING_CONFIG } from "../data/config.js?v=2026-10-03a";
-import { wrapVerse, decoratePassage, initParsingClicks } from "./parsing.js?v=2026-10-03a";
+import { READING_CONFIG } from "../data/config.js?v=2026-10-03b";
+import { wrapVerse, decoratePassage, initParsingClicks } from "./parsing.js?v=2026-10-03b";
 
 const STORAGE_KEY = "blapp_reading_v1";
-let currentLang = "greek";
+let currentLang = null;
 let currentBook = null; // { verses: [...], label, versesPerSitting }
 
 function loadProgress() {
@@ -127,13 +127,9 @@ export function initReading() {
   initParsingClicks(document.getElementById("reading-passage"));
   document.getElementById("mark-read-btn").addEventListener("click", markReadAndContinue);
 
-  document.querySelectorAll("#view-reading .lang-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll("#view-reading .lang-btn").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      loadLang(btn.dataset.lang);
-    });
-  });
-
-  loadLang(currentLang);
+  return {
+    show(lang) {
+      if (lang !== currentLang) loadLang(lang);
+    },
+  };
 }
